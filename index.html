@@ -248,8 +248,20 @@
     // GAME LOGIC
     //-------------------------------------------------------------------------
 
-    function play() { hide('start'); reset();          playing = true;  }
-    function lose() { show('start'); setVisualScore(); playing = false; }
+    function play() {
+      hide('start');
+      hideById('paused'); // Make sure paused message is hidden
+      paused = false;     // Ensure game is not paused when starting
+      reset();
+      playing = true;
+    }
+    function lose() {
+      show('start');
+      setVisualScore();
+      playing = false;
+      paused = false;     // Reset paused state on lose
+      hideById('paused'); // Hide paused message if game ends while paused
+    }
 
     function setVisualScore(n)      { vscore = n || score; invalidateScore(); }
     function setScore(n)            { score = n; setVisualScore(n);  }
@@ -277,6 +289,9 @@
     }
 
     function update(idt) {
+      if (paused) {
+        return; // Do nothing if paused
+      }
       if (playing) {
         if (vscore < score)
           setVisualScore(vscore + 1);
