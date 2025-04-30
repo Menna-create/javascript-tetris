@@ -29,6 +29,7 @@
   <div id="tetris">
     <div id="menu">
       <p id="start"><a href="javascript:play();">Press Space to Play.</a></p>
+      <p id="paused" style="display: none; text-align: center; font-weight: bold; color: orange;">PAUSED</p> <!-- Pause message element -->
       <p><canvas id="upcoming"></canvas></p>
       <p>score <span id="score">00000</span></p>
       <p>rows <span id="rows">0</span></p>
@@ -49,6 +50,9 @@
     function hide(id)       { get(id).style.visibility = 'hidden'; }
     function show(id)       { get(id).style.visibility = null;     }
     function html(id, html) { get(id).innerHTML = html;            }
+    // Add these two:
+    function showById(id)   { get(id).style.display = 'block'; }
+    function hideById(id)   { get(id).style.display = 'none';  }
 
     function timestamp()           { return new Date().getTime();                             }
     function random(min, max)      { return (min + (Math.random() * (max - min)));            }
@@ -88,6 +92,7 @@
         blocks,        // 2 dimensional array (nx*ny) representing tetris court - either empty block or occupied by a 'piece'
         actions,       // queue of user actions (inputs)
         playing,       // true|false - game is in progress
+        paused,        // true|false - game is paused
         dt,            // time since starting this game
         current,       // the current piece
         next,          // the next piece
@@ -214,16 +219,24 @@
 
     function keydown(ev) {
       var handled = false;
-      if (playing) {
+      // Check if playing and NOT paused for game actions
+      if (playing && !paused) {
         switch(ev.keyCode) {
           case KEY.LEFT:   actions.push(DIR.LEFT);  handled = true; break;
           case KEY.RIGHT:  actions.push(DIR.RIGHT); handled = true; break;
           case KEY.UP:     actions.push(DIR.UP);    handled = true; break;
           case KEY.DOWN:   actions.push(DIR.DOWN);  handled = true; break;
-          case KEY.ESC:    lose();                  handled = true; break;
+          // Note: ESC is handled separately below
         }
       }
-      else if (ev.keyCode == KEY.SPACE) {
+
+      // Handle pause toggle if playing, regardless of current paused state
+      if (playing && ev.keyCode == KEY.ESC) {
+          togglePause();
+          handled = true;
+      }
+      // Handle starting the game if not playing
+      else if (!playing && ev.keyCode == KEY.SPACE) {
         play();
         handled = true;
       }
@@ -254,6 +267,7 @@
 
     function reset() {
       dt = 0;
+      paused = false; // Initialize paused state during reset
       clearActions();
       clearBlocks();
       clearRows();
@@ -355,6 +369,17 @@
       for(y = n ; y >= 0 ; --y) {
         for(x = 0 ; x < nx ; ++x)
           setBlock(x, y, (y == 0) ? null : getBlock(x, y-1));
+      }
+    }
+
+    function togglePause() {
+      if (playing) { // Only toggle pause if the game is actually running
+        paused = !paused;
+        if (paused) {
+          showById('paused'); // Show the "PAUSED" message using display
+        } else {
+          hideById('paused'); // Hide the "PAUSED" message using display
+        }
       }
     }
 
